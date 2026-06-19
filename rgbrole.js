@@ -14,7 +14,7 @@ const TOKEN = process.env.TOKEN
 const RGB_ROLES = [
   {
     roleId: '1506595089546350643',   // Role yang mau di-RGB
-    speed: 1,                    // Makin gede makin cepet (1-20)
+    speed: 30,                    // Makin gede makin cepet (1-20)
   },
   // Tambah role lain kalau mau:
   // {
@@ -23,7 +23,7 @@ const RGB_ROLES = [
   // },
 ]
 
-const UPDATE_INTERVAL_MS = 5000  // update tiap 100ms (jangan terlalu cepet, bisa kena rate limit)
+const UPDATE_INTERVAL_MS = 10000  // update tiap 100ms (jangan terlalu cepet, bisa kena rate limit)
 // =============================================
 
 // Hue tracker per role
@@ -60,28 +60,28 @@ client.once('clientReady', async () => {
   RGB_ROLES.forEach(r => { hueMap[r.roleId] = 0 })
 
   // Start RGB loop
-  setInterval(async () => {
+setInterval(async () => {
     for (const config of RGB_ROLES) {
       try {
-        // Find the role across all guilds
         for (const guild of client.guilds.cache.values()) {
           const role = guild.roles.cache.get(config.roleId)
           if (!role) continue
 
-          // Update hue
           hueMap[config.roleId] = (hueMap[config.roleId] + config.speed) % 360
 
-          // Get RGB color
           const [r, g, b] = hsvToRgb(hueMap[config.roleId], 1, 1)
           const color = rgbToHex(r, g, b)
 
-          // Update role color
           await role.setColor(color)
-console.log(`Updated role color: hue=${hueMap[config.roleId]} rgb=${r},${g},${b}`)
+          console.log(`🎨 Updated role color — hue: ${hueMap[config.roleId]}`)
         }
       } catch (err) {
-        // Silently ignore rate limit errors
-        if (err.code !== 429) console.error('Error updating role:', err.message)
+        if (err.status === 429) {
+          console.log('⏳ Rate limited, waiting...')
+          await new Promise(r => setTimeout(r, 10000))
+        } else {
+          console.error('Error:', err.message)
+        }
       }
     }
   }, UPDATE_INTERVAL_MS)
