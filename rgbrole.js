@@ -1,8 +1,5 @@
 const { Client, GatewayIntentBits } = require('discord.js')
 
-const http = require('http')
-http.createServer((req, res) => res.end('ok')).listen(process.env.PORT || 3000)
-
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 })
