@@ -1,90 +1,44 @@
 const { Client, GatewayIntentBits } = require('discord.js')
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-  ]
+  intents: [GatewayIntentBits.Guilds]
 })
 
-// =============================================
-// ✅ SETTINGS — edit these
-// =============================================
 const TOKEN = process.env.TOKEN
 
-const RGB_ROLES = [
-  {
-    roleId: '1506595089546350643',   // Role yang mau di-RGB
-    speed: 30,                    // Makin gede makin cepet (1-20)
-  },
-  // Tambah role lain kalau mau:
-  // {
-  //   roleId: 'YOUR_ROLE_ID_2',
-  //   speed: 10,
-  // },
-]
+const ROLE_ID = '1506595089546350643'
+let hue = 0
 
-const UPDATE_INTERVAL_MS = 10000  // update tiap 100ms (jangan terlalu cepet, bisa kena rate limit)
-// =============================================
-
-// Hue tracker per role
-const hueMap = {}
-
-// Convert HSV to RGB
 function hsvToRgb(h, s, v) {
-  let r, g, b
   const i = Math.floor(h / 60) % 6
   const f = h / 60 - Math.floor(h / 60)
-  const p = v * (1 - s)
-  const q = v * (1 - f * s)
-  const t = v * (1 - (1 - f) * s)
-  switch (i) {
-    case 0: r = v; g = t; b = p; break
-    case 1: r = q; g = v; b = p; break
-    case 2: r = p; g = v; b = t; break
-    case 3: r = p; g = q; b = v; break
-    case 4: r = t; g = p; b = v; break
-    case 5: r = v; g = p; b = q; break
-  }
-  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]
+  const p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s)
+  const vals = [[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]]
+  return vals[i].map(x => Math.round(x * 255))
 }
 
-// Convert RGB to hex number (Discord uses number not string)
-function rgbToHex(r, g, b) {
-  return (r << 16) | (g << 8) | b
-}
+function rgbToHex(r, g, b) { return (r << 16) | (g << 8) | b }
 
-client.once('clientReady', async () => {
-  console.log(`✅ RGB Role Bot online as ${client.user.tag}`)
-
-  // Init hue for each role
-  RGB_ROLES.forEach(r => { hueMap[r.roleId] = 0 })
-
-  // Start RGB loop
-setInterval(async () => {
-    for (const config of RGB_ROLES) {
-      try {
-        for (const guild of client.guilds.cache.values()) {
-          const role = guild.roles.cache.get(config.roleId)
-          if (!role) continue
-
-          hueMap[config.roleId] = (hueMap[config.roleId] + config.speed) % 360
-
-          const [r, g, b] = hsvToRgb(hueMap[config.roleId], 1, 1)
-          const color = rgbToHex(r, g, b)
-
-          await role.setColor(color)
-          console.log(`🎨 Updated role color — hue: ${hueMap[config.roleId]}`)
-        }
-      } catch (err) {
-        if (err.status === 429) {
-          console.log('⏳ Rate limited, waiting...')
-          await new Promise(r => setTimeout(r, 10000))
-        } else {
-          console.error('Error:', err.message)
-        }
-      }
+async function updateColor() {
+  try {
+    for (const guild of client.guilds.cache.values()) {
+      const role = guild.roles.cache.get(ROLE_ID)
+      if (!role) continue
+      hue = (hue + 40) % 360
+      const [r, g, b] = hsvToRgb(hue, 1, 1)
+      await role.setColor(rgbToHex(r, g, b))
+      console.log(`🎨 Color updated — hue: ${hue}`)
     }
-  }, UPDATE_INTERVAL_MS)
+  } catch (err) {
+    console.log('⚠️ Error:', err.message)
+  }
+  // Schedule next update regardless of error
+  setTimeout(updateColor, 30000)
+}
+
+client.once('clientReady', () => {
+  console.log(`✅ RGB Bot online as ${client.user.tag}`)
+  setTimeout(updateColor, 5000)
 })
 
 client.login(TOKEN)
