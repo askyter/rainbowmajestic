@@ -14,7 +14,7 @@ const TOKEN = process.env.TOKEN
 const RGB_ROLES = [
   {
     roleId: '1506595089546350643',   // Role yang mau di-RGB
-    speed: 5,                    // Makin gede makin cepet (1-20)
+    speed: 1,                    // Makin gede makin cepet (1-20)
   },
   // Tambah role lain kalau mau:
   // {
@@ -23,7 +23,7 @@ const RGB_ROLES = [
   // },
 ]
 
-const UPDATE_INTERVAL_MS = 100  // update tiap 100ms (jangan terlalu cepet, bisa kena rate limit)
+const UPDATE_INTERVAL_MS = 5000  // update tiap 100ms (jangan terlalu cepet, bisa kena rate limit)
 // =============================================
 
 // Hue tracker per role
