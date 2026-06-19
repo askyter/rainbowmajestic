@@ -77,6 +77,7 @@ client.once('clientReady', async () => {
 
           // Update role color
           await role.setColor(color)
+console.log(`Updated role color: hue=${hueMap[config.roleId]} rgb=${r},${g},${b}`)
         }
       } catch (err) {
         // Silently ignore rate limit errors
